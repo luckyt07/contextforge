@@ -1,0 +1,107 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: rag-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rag_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localdev}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-mlflow-db.sql:/docker-entrypoint-initdb.d/init-mlflow-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rag_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: rag-qdrant
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  redis:
+    image: redis:7-alpine
+    container_name: rag-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: rag-mlflow
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5001:5000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://0.0.0.0:5000
+      - MLFLOW_SERVER_ALLOWED_HOSTS="*"
+    volumes:
+      - ./mlartifacts:/mlartifacts
+    entrypoint: >
+      /bin/sh -c "pip install --no-cache-dir 'psycopg[binary]' psycopg2-binary &&
+      mlflow db upgrade postgresql://postgres:${POSTGRES_PASSWORD:-localdev}@postgres:5432/mlflow_db &&
+      export MLFLOW_SERVER_ALLOWED_HOSTS='*' &&
+      mlflow server
+      --backend-store-uri postgresql://postgres:${POSTGRES_PASSWORD:-localdev}@postgres:5432/mlflow_db
+      --default-artifact-root /mlartifacts
+      --host 0.0.0.0
+      --port 5000
+      --allowed-hosts '*'"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-backend
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+      mlflow:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_URL=postgresql+psycopg://postgres:${POSTGRES_PASSWORD:-localdev}@postgres:5432/rag_db
+      - REDIS_URL=redis://redis:6379/0
+      - QDRANT_URL=http://qdrant:6333
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_EXPERIMENT_NAME=02-localhost-app
+      - PROMPT_ALIAS=production
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - VLLM_API_KEY=${VLLM_API_KEY:-EMPTY}
+      - EMBEDDING_BASE_URL=http://host.docker.internal:8001/v1
+      - LLM_BASE_URL=http://host.docker.internal:8002/v1
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
+  qdrant_data:
+  redis_data:

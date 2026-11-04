@@ -1,0 +1,34 @@
+# Virtual environment & caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Git & IDEs
+.git/
+.gitignore
+.agents/
+.kiro/
+.vscode/
+.idea/
+.DS_Store
+
+# Local databases, secrets & artifacts (NEVER bake into image)
+.env*
+projects.json
+mlflow.db
+mlartifacts/
+mlflow/
+*.db
+*.sqlite3
+
+# Local test uploads & scratch scripts
+uploads/*
+!uploads/.gitkeep
+tmp.py
+*.ipynb
+.ipynb_checkpoints/
+DOCKER_HELPER.md
+docker-compose*.yml
+init-mlflow-db.sql
