@@ -1,25 +1,28 @@
-# Upcoming Work
+# ContextForge Roadmap
 
-## Prompt quality
+## Phase 1: Prompt foundation
 
-- [ ] Improve the system and summary prompts.
-- [ ] Add prompt versioning and compare prompt changes through MLflow.
+- [ ] Refine the system and summary prompts.
+- [ ] Version prompts in MLflow and compare prompt changes against a fixed set of examples.
 
-## Retrieval quality
+## Phase 2: Retrieval quality
 
-- [ ] Add hybrid retrieval that combines dense vector search with keyword search.
-- [ ] Add a reranker to improve the relevance order of retrieved documents.
-- [ ] Measure retrieval quality before and after the hybrid retrieval and reranking changes.
+- [ ] Combine semantic vector search with keyword search for hybrid retrieval.
+- [ ] Add a reranker to reorder retrieved chunks before they reach the model.
 
-## YouTube knowledge assistant
+## Phase 3: Answer traceability
 
-- [ ] Add YouTube video ingestion using a public video URL.
-- [ ] Extract or import the video transcript, then generate a structured summary with key topics and takeaways.
-- [ ] Index transcript chunks for retrieval so users can ask follow-up questions and chat with the video content.
-- [ ] Return answers grounded in the video transcript, including relevant timestamps when available.
+- [ ] Show the documents, chunks, and page references used for each answer.
+- [ ] Let users open the source context directly from an answer.
 
-## Evaluation dataset
+## Phase 4: YouTube knowledge assistant
 
-- [ ] Build a representative evaluation dataset from project documents and expected answers.
-- [ ] Define retrieval and answer-quality metrics.
-- [ ] Run the dataset automatically against prompt and retrieval changes.
+- [ ] Accept a YouTube URL and ingest the available transcript.
+- [ ] Generate a structured summary with topics and takeaways.
+- [ ] Support chat over the video transcript, with timestamps when available.
+
+## Phase 5: Evaluation and safety
+
+- [ ] Build an evaluation dataset from representative documents and questions.
+- [ ] Measure retrieval relevance and answer quality after prompt or RAG changes.
+- [ ] Add guardrails and vulnerability checks for unsafe inputs, prompt injection, and data exposure.
