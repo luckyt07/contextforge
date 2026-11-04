@@ -54,17 +54,6 @@ Stop the development stack with:
 make dev-down
 ```
 
-## Kubernetes commands
-
-```bash
-cd backend
-make k8s-up
-make k8s-update
-make k8s-down
-```
-
-`make k8s-update` builds and publishes a new backend image, then rolls out only the backend deployment.
-
 ## Frontend setup
 
 ```bash
